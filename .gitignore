@@ -1,1 +1,4 @@
 .devcontainer/.build-hash
+
+# Claude tracking bridge
+.claude-tracking-bridge/

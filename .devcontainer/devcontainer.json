@@ -23,8 +23,11 @@
     "HTTP_PROXY": "http://localhost:8080",
     "HTTPS_PROXY": "http://localhost:8080",
     // Don't proxy local dev server traffic
-    "NO_PROXY": "localhost,127.0.0.1"
+    "NO_PROXY": "localhost,127.0.0.1",
+    // Claude tracking bridge
+    "CLAUDE_TRACKING_HOST_DIR": "${localWorkspaceFolder}",
+    "CLAUDE_TRACKING_HOST_TMUX_PANE": "${localEnv:TMUX_PANE}"
   },
   "postCreateCommand": "HTTP_PROXY= HTTPS_PROXY= echo 'Container created. Add your install command here.'",
-  "postStartCommand": "sudo /usr/local/bin/start-proxy.sh"
+  "postStartCommand": "sudo /usr/local/bin/start-proxy.sh && python3 /workspace/.devcontainer/tracking-bridge-setup.py"
 }
