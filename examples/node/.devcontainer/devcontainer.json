@@ -1,0 +1,30 @@
+{
+  "name": "Secure Node.js",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "PNPM_VERSION": "10.5.2"
+    }
+  },
+  "capAdd": ["NET_ADMIN"],
+  "remoteUser": "dev",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-history-${devcontainerId},target=/home/dev/.history_vol,type=volume",
+    "source=${localWorkspaceFolderBasename}-pnpm-store-${devcontainerId},target=/home/dev/.local/share/pnpm/store,type=volume",
+    "source=${localEnv:HOME}/.secrets/proxy-secrets.json,target=/etc/proxy-secrets/proxy-secrets.json,type=bind,readonly",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly",
+    "source=${localWorkspaceFolder}/.devcontainer/.zshrc,target=/home/dev/.zshrc,type=bind"
+  ],
+  "containerEnv": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "HISTFILE": "/home/dev/.history_vol/.zsh_history",
+    "HTTP_PROXY": "http://localhost:8080",
+    "HTTPS_PROXY": "http://localhost:8080",
+    "NO_PROXY": "localhost,127.0.0.1"
+  },
+  "forwardPorts": [3000, 5173, 8787],
+  "postCreateCommand": "HTTP_PROXY= HTTPS_PROXY= pnpm install",
+  "postStartCommand": "sudo /usr/local/bin/start-proxy.sh"
+}

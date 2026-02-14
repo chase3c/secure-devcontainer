@@ -1,0 +1,30 @@
+{
+  "name": "Secure Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "capAdd": ["NET_ADMIN"],
+  "remoteUser": "dev",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    // Persist shell history across rebuilds
+    "source=${localWorkspaceFolderBasename}-history-${devcontainerId},target=/home/dev/.history_vol,type=volume",
+    // Proxy secrets — mounted from host, root-owned inside container
+    "source=${localEnv:HOME}/.secrets/proxy-secrets.json,target=/etc/proxy-secrets/proxy-secrets.json,type=bind,readonly",
+    // Mount host git config
+    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly",
+    // zsh config — edit without rebuilding
+    "source=${localWorkspaceFolder}/.devcontainer/.zshrc,target=/home/dev/.zshrc,type=bind"
+  ],
+  "containerEnv": {
+    "HISTFILE": "/home/dev/.history_vol/.zsh_history",
+    // Route all HTTP traffic through the proxy
+    "HTTP_PROXY": "http://localhost:8080",
+    "HTTPS_PROXY": "http://localhost:8080",
+    // Don't proxy local dev server traffic
+    "NO_PROXY": "localhost,127.0.0.1"
+  },
+  "postCreateCommand": "HTTP_PROXY= HTTPS_PROXY= echo 'Container created. Add your install command here.'",
+  "postStartCommand": "sudo /usr/local/bin/start-proxy.sh"
+}

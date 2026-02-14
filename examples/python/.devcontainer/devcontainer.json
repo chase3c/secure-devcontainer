@@ -1,0 +1,25 @@
+{
+  "name": "Secure Python",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "capAdd": ["NET_ADMIN"],
+  "remoteUser": "dev",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-history-${devcontainerId},target=/home/dev/.history_vol,type=volume",
+    "source=${localEnv:HOME}/.secrets/proxy-secrets.json,target=/etc/proxy-secrets/proxy-secrets.json,type=bind,readonly",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly",
+    "source=${localWorkspaceFolder}/.devcontainer/.zshrc,target=/home/dev/.zshrc,type=bind"
+  ],
+  "containerEnv": {
+    "HISTFILE": "/home/dev/.history_vol/.zsh_history",
+    "HTTP_PROXY": "http://localhost:8080",
+    "HTTPS_PROXY": "http://localhost:8080",
+    "NO_PROXY": "localhost,127.0.0.1"
+  },
+  "forwardPorts": [8000, 8080],
+  "postCreateCommand": "HTTP_PROXY= HTTPS_PROXY= uv sync",
+  "postStartCommand": "sudo /usr/local/bin/start-proxy.sh"
+}
