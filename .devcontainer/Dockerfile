@@ -42,6 +42,23 @@ RUN echo "$USERNAME ALL=(root) NOPASSWD: /usr/local/bin/start-proxy.sh" > /etc/s
 # mitmproxy cert directory (root-owned — dev user never touches private key material)
 RUN mkdir -p /etc/mitmproxy-certs && chmod 700 /etc/mitmproxy-certs
 
+# GitHub CLI
+RUN GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | jq -r '.tag_name' | sed 's/^v//') \
+  && ARCH=$(dpkg --print-architecture) \
+  && curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.deb" -o /tmp/gh.deb \
+  && dpkg -i /tmp/gh.deb \
+  && rm /tmp/gh.deb
+
+# GitLab CLI
+RUN GLAB_VERSION=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases | jq -r '.[0].tag_name' | sed 's/^v//') \
+  && ARCH=$(dpkg --print-architecture) \
+  && curl -fsSL "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/${GLAB_VERSION}/glab_${GLAB_VERSION}_linux_${ARCH}.deb" -o /tmp/glab.deb \
+  && dpkg -i /tmp/glab.deb \
+  && rm /tmp/glab.deb
+
+# Trust the bind-mounted workspace directory
+RUN git config --system --add safe.directory /workspace
+
 # --- Add your runtime below this line ---
 # Examples:
 #   Node.js:  RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
@@ -51,5 +68,13 @@ RUN mkdir -p /etc/mitmproxy-certs && chmod 700 /etc/mitmproxy-certs
 
 USER $USERNAME
 WORKDIR /workspace
+
+# Dummy tokens — CLIs think they're authenticated, proxy swaps in real credentials.
+# gh auth login verifies the token, so write the config file directly.
+RUN mkdir -p ~/.config/gh \
+  && printf 'github.com:\n    oauth_token: proxy-injected\n    git_protocol: https\n' > ~/.config/gh/hosts.yml
+# glab config set doesn't verify, safe to call directly.
+RUN glab config set token proxy-injected --host gitlab.com \
+  && glab config set git_protocol https --host gitlab.com
 
 SHELL ["/bin/zsh", "-c"]
