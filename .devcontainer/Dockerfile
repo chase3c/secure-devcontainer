@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     ca-certificates \
     sudo \
-    iptables \
     python3 \
     python3-pip \
     pipx \
@@ -56,12 +55,29 @@ RUN GLAB_VERSION=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcl
   && dpkg -i /tmp/glab.deb \
   && rm /tmp/glab.deb
 
+# Node.js (required for Claude Code)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get install -y nodejs \
+  && rm -rf /var/lib/apt/lists/*
+
+# Claude Code
+RUN npm install -g @anthropic-ai/claude-code
+
+# Beans — flat-file issue tracker (https://github.com/hmans/beans)
+RUN ARCH=$(dpkg --print-architecture) \
+  && case "$ARCH" in amd64) BEANS_ARCH="x86_64";; arm64) BEANS_ARCH="arm64";; *) echo "Unsupported arch: $ARCH" && exit 1;; esac \
+  && curl -fsSL "https://github.com/hmans/beans/releases/latest/download/beans_Linux_${BEANS_ARCH}.tar.gz" \
+  | tar -xz -C /usr/local/bin beans
+
 # Trust the bind-mounted workspace directory
 RUN git config --system --add safe.directory /workspace
 
+# Claude Code config directory (host CLAUDE.md mounted read-only at startup,
+# statusline + settings injected by tracking-bridge-setup.py)
+RUN mkdir -p /home/$USERNAME/.claude && chown $USERNAME:$USERNAME /home/$USERNAME/.claude
+
 # --- Add your runtime below this line ---
 # Examples:
-#   Node.js:  RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
 #   Python:   RUN apt-get update && apt-get install -y python3-venv
 #   Go:       RUN curl -fsSL https://go.dev/dl/go1.22.0.linux-amd64.tar.gz | tar -C /usr/local -xz
 # -----------------------------------------

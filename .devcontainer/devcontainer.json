@@ -3,7 +3,6 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "capAdd": ["NET_ADMIN"],
   "remoteUser": "dev",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "workspaceFolder": "/workspace",
@@ -14,6 +13,8 @@
     "source=${localEnv:HOME}/.secrets/proxy-secrets.json,target=/etc/proxy-secrets/proxy-secrets.json,type=bind,readonly",
     // Mount host git config
     "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly",
+    // Host Claude.md — agent sees user's global instructions (read-only)
+    "source=${localEnv:HOME}/.claude/CLAUDE.md,target=/home/dev/.claude/CLAUDE.md,type=bind,readonly",
     // zsh config — edit without rebuilding
     "source=${localWorkspaceFolder}/.devcontainer/.zshrc,target=/home/dev/.zshrc,type=bind"
   ],

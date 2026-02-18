@@ -54,17 +54,6 @@ ENVEOF
   fi
 fi
 
-# Enforce egress — only root (proxy) can reach the internet directly
-iptables -F OUTPUT 2>/dev/null || true
-iptables -A OUTPUT -o lo -j ACCEPT
-iptables -A OUTPUT -m owner --uid-owner 0 -j ACCEPT
-iptables -A OUTPUT -j DROP
-# Block all IPv6 egress (proxy is IPv4 only)
-ip6tables -F OUTPUT 2>/dev/null || true
-ip6tables -A OUTPUT -o lo -j ACCEPT
-ip6tables -A OUTPUT -m owner --uid-owner 0 -j ACCEPT
-ip6tables -A OUTPUT -j DROP
-echo "Egress firewall active — dev user traffic must go through proxy"
 
 # Fix ownership on any persisted volumes
 find "$DEV_HOME" -maxdepth 1 -name ".*_vol" -exec chown -R "$DEV_USER:$DEV_USER" {} \; 2>/dev/null || true
